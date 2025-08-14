@@ -1,0 +1,1486 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, minimum-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="format-detection" content="telephone=no">
+    
+    <!-- 微信分享配置 -->
+    <meta property="og:title" content="🌸 爱心花环游戏 🌸">
+    <meta property="og:description" content="一个温馨浪漫的小游戏，编织属于我们的爱心花环💖">
+    <meta property="og:image" content="https://你的域名.com/share-image.jpg">
+    <meta property="og:url" content="https://你的域名.com/">
+    
+    <title>🌸 爱心花环游戏 🌸</title>
+    
+    <!-- 微信JS-SDK -->
+    <script src="https://res.wx.qq.com/open/js/jweixin-1.6.0.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #ffeef8 0%, #f8e8ff 25%, #e8f5ff 50%, #fff0f5 75%, #fdf2f8 100%);
+            min-height: 100vh;
+            user-select: none;
+            color: #666;
+            touch-action: manipulation;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            overflow-x: hidden;
+        }
+
+        /* 樱花飘落效果 */
+        .sakura-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .sakura {
+            position: absolute;
+            font-size: 16px;
+            animation: sakuraFall linear infinite;
+            opacity: 0.7;
+        }
+
+        @keyframes sakuraFall {
+            from {
+                transform: translateY(-100px) rotate(0deg);
+                opacity: 0.7;
+            }
+            to {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        /* 游戏容器 */
+        .game-container {
+            position: relative;
+            min-height: 100vh;
+            min-height: calc(var(--vh, 1vh) * 100);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+            z-index: 10;
+        }
+
+        /* 游戏界面 */
+        .game-screen {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 25px;
+            padding: 30px 20px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(255, 182, 193, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            max-width: 450px;
+            width: 95%;
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .game-title {
+            font-size: 2.2rem;
+            color: #d63384;
+            margin-bottom: 15px;
+            font-weight: 300;
+            letter-spacing: 2px;
+        }
+
+        .game-subtitle {
+            font-size: 1rem;
+            color: #8b5a83;
+            margin-bottom: 30px;
+            font-weight: 300;
+        }
+
+        /* 开始界面 */
+        .start-screen {
+            animation: fadeIn 1.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .name-input {
+            width: 100%;
+            max-width: 280px;
+            padding: 15px 20px;
+            font-size: 16px; /* 防止iOS缩放 */
+            border: 2px solid #f8bbd9;
+            border-radius: 20px;
+            background: #fdf2f8;
+            text-align: center;
+            outline: none;
+            margin-bottom: 25px;
+            transition: all 0.3s ease;
+            color: #666;
+            -webkit-appearance: none;
+            -webkit-border-radius: 20px;
+        }
+
+        .name-input:focus {
+            border-color: #e879f9;
+            background: #fef7ff;
+            transform: scale(1.02);
+        }
+
+        /* 游戏按钮 */
+        .game-btn {
+            padding: 15px 28px;
+            margin: 8px;
+            font-size: 1rem;
+            color: #8b5a83;
+            border: 2px solid #f8bbd9;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #fdf2f8;
+            font-weight: 300;
+            letter-spacing: 1px;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        .game-btn:hover, .game-btn:active {
+            background: #f3e8ff;
+            border-color: #e879f9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(232, 121, 249, 0.2);
+        }
+
+        /* 选择按钮 */
+        .choice-btn {
+            background: #fef7ff;
+            border: 1px solid #f8bbd9;
+            margin: 8px auto;
+            padding: 12px 16px;
+            font-size: 0.95rem;
+            border-radius: 15px;
+            display: block;
+            width: 100%;
+            max-width: 350px;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            transition: all 0.3s ease;
+        }
+
+        .choice-btn:hover, .choice-btn:active {
+            background: #f3e8ff;
+            border-color: #e879f9;
+            transform: translateY(-1px);
+        }
+
+        .choice-btn.correct {
+            background: #dcfce7;
+            border-color: #86efac;
+            animation: gentleCorrect 0.6s ease;
+        }
+
+        @keyframes gentleCorrect {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        /* 问题显示 */
+        .question {
+            font-size: 1.1rem;
+            color: #8b5a83;
+            margin-bottom: 25px;
+            line-height: 1.8;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 300;
+        }
+
+        /* 进度条 */
+        .progress-container {
+            width: 100%;
+            height: 8px;
+            background: #f8bbd9;
+            border-radius: 4px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #f8bbd9, #e879f9);
+            border-radius: 4px;
+            transition: width 0.8s ease;
+        }
+
+        /* 爱心花园 */
+        .heart-garden {
+            margin: 20px 0;
+        }
+
+        .heart-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            max-width: 250px;
+            margin: 20px auto;
+            position: relative;
+        }
+
+        /* 爱心形状的网格布局 */
+        .heart-pot {
+            aspect-ratio: 1;
+            background: linear-gradient(135deg, #fef7ff, #f3e8ff);
+            border: 2px solid #f8bbd9;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        /* 隐藏某些位置来形成爱心形状 */
+        .heart-pot:nth-child(1), .heart-pot:nth-child(5), 
+        .heart-pot:nth-child(21), .heart-pot:nth-child(22), 
+        .heart-pot:nth-child(23), .heart-pot:nth-child(24), 
+        .heart-pot:nth-child(25) {
+            visibility: hidden;
+        }
+
+        .heart-pot:hover, .heart-pot:active {
+            transform: scale(1.1);
+            border-color: #e879f9;
+        }
+
+        .heart-pot.bloomed {
+            background: linear-gradient(135deg, #fce7f3, #f3e8ff);
+            animation: bloom 0.8s ease;
+            border-color: #e879f9;
+        }
+
+        @keyframes bloom {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        /* 收集星星游戏 */
+        .star-field {
+            position: relative;
+            height: 200px;
+            background: linear-gradient(135deg, #fef7ff, #f8fafc);
+            border: 2px dashed #f8bbd9;
+            border-radius: 15px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        .falling-star {
+            position: absolute;
+            font-size: 24px;
+            cursor: pointer;
+            animation: starFloat 6s linear;
+            transition: transform 0.2s ease;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        .falling-star:hover, .falling-star:active {
+            transform: scale(1.3);
+        }
+
+        @keyframes starFloat {
+            from { 
+                transform: translateY(-40px) translateX(0);
+                opacity: 0.9;
+            }
+            to { 
+                transform: translateY(240px) translateX(30px);
+                opacity: 0.3;
+            }
+        }
+
+        /* 配对游戏 */
+        .memory-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            max-width: 280px;
+            margin: 20px auto;
+        }
+
+        .memory-card {
+            aspect-ratio: 1;
+            background: #fef7ff;
+            border: 2px solid #f8bbd9;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        .memory-card:hover, .memory-card:active {
+            transform: scale(1.05);
+            border-color: #e879f9;
+        }
+
+        .memory-card.flipped {
+            background: #f3e8ff;
+            border-color: #e879f9;
+        }
+
+        .memory-card.matched {
+            background: #dcfce7;
+            border-color: #86efac;
+            animation: gentleMatch 0.5s ease;
+        }
+
+        @keyframes gentleMatch {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        /* 结果界面 */
+        .result-screen {
+            animation: softAppear 1.2s ease-out;
+        }
+
+        @keyframes softAppear {
+            0% { opacity: 0; transform: scale(0.8); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        .love-percentage {
+            font-size: 3.5rem;
+            color: #e879f9;
+            margin: 20px 0;
+            font-weight: 300;
+            animation: gentlePulse 3s ease-in-out infinite;
+        }
+
+        @keyframes gentlePulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .final-message {
+            font-size: 1rem;
+            color: #8b5a83;
+            line-height: 1.8;
+            margin: 20px 0;
+            font-weight: 300;
+        }
+
+        /* 完整花环显示 */
+        .complete-wreath {
+            margin: 30px 0;
+            animation: wreathComplete 2.5s ease-out;
+            filter: drop-shadow(0 0 20px rgba(232, 121, 249, 0.3));
+        }
+
+        .complete-heart-wreath {
+            display: grid;
+            grid-template-columns: repeat(9, 1fr);
+            gap: 3px;
+            font-size: 1.8rem;
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 240, 245, 0.1));
+            border-radius: 25px;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(232, 121, 249, 0.2);
+        }
+
+        .complete-heart-wreath span {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: sparkleGlow 3s ease-in-out infinite;
+        }
+
+        .complete-heart-wreath span:nth-child(4n) {
+            animation-delay: 0.5s;
+        }
+
+        .complete-heart-wreath span:nth-child(4n+1) {
+            animation-delay: 1s;
+        }
+
+        .complete-heart-wreath span:nth-child(4n+2) {
+            animation-delay: 1.5s;
+        }
+
+        @keyframes sparkleGlow {
+            0%, 100% { transform: scale(1); filter: brightness(1); }
+            50% { transform: scale(1.1); filter: brightness(1.3) drop-shadow(0 0 10px rgba(232, 121, 249, 0.6)); }
+        }
+
+        @keyframes wreathComplete {
+            0% { 
+                transform: scale(0.3) rotate(-180deg); 
+                opacity: 0; 
+                filter: blur(10px) drop-shadow(0 0 0 rgba(232, 121, 249, 0)); 
+            }
+            70% { 
+                transform: scale(1.1) rotate(10deg); 
+                opacity: 1; 
+                filter: blur(0) drop-shadow(0 0 30px rgba(232, 121, 249, 0.6)); 
+            }
+            100% { 
+                transform: scale(1) rotate(0deg); 
+                opacity: 1; 
+                filter: blur(0) drop-shadow(0 0 20px rgba(232, 121, 249, 0.3)); 
+            }
+        }
+
+        /* 特效 */
+        .sparkles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        .sparkle {
+            position: absolute;
+            font-size: 20px;
+            animation: sparkleFloat 3s ease-out forwards;
+        }
+
+        @keyframes sparkleFloat {
+            0% { transform: scale(1) rotate(0deg); opacity: 1; }
+            100% { transform: scale(2) rotate(180deg); opacity: 0; }
+        }
+
+        @keyframes gentleFloat {
+            0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            100% { opacity: 0; transform: translate(-50%, -120%) scale(1.2); }
+        }
+
+        /* 音乐控制按钮 */
+        .music-control {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid #f8bbd9;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        .music-control:hover {
+            background: #f3e8ff;
+            border-color: #e879f9;
+            transform: scale(1.1);
+        }
+
+        .music-control.playing {
+            animation: musicPulse 2s ease-in-out infinite;
+        }
+
+        /* 隐藏类 */
+        .hidden {
+            display: none !important;
+        }
+
+        /* 分享按钮 */
+        .share-btn {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a52);
+            color: white;
+            border: none;
+            margin: 5px;
+        }
+
+        .share-btn:hover, .share-btn:active {
+            background: linear-gradient(45deg, #ee5a52, #d63031);
+            transform: translateY(-2px);
+        }
+
+        /* 分享面板 */
+        .share-panel {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(15px);
+            border-radius: 20px 20px 0 0;
+            padding: 20px;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+            z-index: 2000;
+            box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .share-panel.show {
+            transform: translateY(0);
+        }
+
+        .share-options {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .share-option {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px 10px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: #666;
+        }
+
+        .share-option:hover {
+            background: #e9ecef;
+            transform: translateY(-2px);
+        }
+
+        .share-option-icon {
+            font-size: 2rem;
+            margin-bottom: 8px;
+        }
+
+        .share-option-text {
+            font-size: 0.8rem;
+            text-align: center;
+        }
+
+        /* 音频元素隐藏 */
+        .audio-hidden {
+            display: none;
+        }
+
+        /* 遮罩层 */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.3);
+            z-index: 1500;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .game-title { font-size: 1.6rem; }
+            .game-subtitle { font-size: 0.9rem; }
+            .name-input { width: 90%; max-width: 250px; }
+            .game-screen { padding: 20px 15px; min-height: 350px; }
+            .heart-grid, .memory-grid { max-width: 180px; }
+            .complete-heart-wreath { max-width: 280px; font-size: 1.2rem; }
+            .question { font-size: 1rem; min-height: 60px; }
+            .choice-btn { font-size: 0.9rem; padding: 10px 12px; }
+            .music-control { width: 40px; height: 40px; font-size: 1rem; top: 10px; right: 10px; }
+        }
+
+        @media (max-width: 480px) {
+            .game-title { font-size: 1.4rem; }
+            .game-screen { padding: 15px 10px; }
+            .heart-grid, .memory-grid { max-width: 160px; }
+            .complete-heart-wreath { max-width: 240px; font-size: 1rem; }
+            .star-field { height: 150px; }
+        }
+
+        /* iOS Safari 适配 */
+        @supports (-webkit-appearance: none) {
+            .game-screen {
+                -webkit-backdrop-filter: blur(10px);
+            }
+            
+            input {
+                -webkit-appearance: none;
+                border-radius: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 樱花飘落 -->
+    <div class="sakura-container" id="sakuraContainer"></div>
+    
+    <!-- 闪光特效 -->
+    <div class="sparkles" id="sparkles"></div>
+    
+    <!-- 音乐控制 -->
+    <div class="music-control" id="musicControl" onclick="toggleMusic()">🎵</div>
+    
+    <!-- 音频文件 -->
+    <audio id="bgMusic" class="audio-hidden" loop>
+        <source src="data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAABIADAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////AAAA5UxBTUUzLjEwMAG8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAANAAAAAAAAAAAAAEgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//tQxAAaAAAGkAAAAIAAANIAAAASqqhUpACAkAAAkAAABEAAAAAT2bIlP" type="audio/mpeg">
+        你的浏览器不支持音频播放。
+    </audio>
+    
+    <audio id="clickSound" class="audio-hidden">
+        <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFAxIouTyvmEbBjiR2O/PeScEJ4DJ8N6SQgoVX7Pp6alWFAxIoeHuvGEaByuR2e/PeScEJoPI792TQgoUX7Lq6qpXFQs=" type="audio/wav">
+    </audio>
+    
+    <audio id="successSound" class="audio-hidden">
+        <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFAxIouTyvmEbBzqVg0" type="audio/wav">
+    </audio>
+    
+    <div class="game-container">
+        <!-- 开始界面 -->
+        <div class="game-screen" id="startScreen">
+            <div class="start-screen">
+                <h1 class="game-title">🌸 爱心花环 🌸</h1>
+                <p class="game-subtitle">每完成一个小游戏，就能获得美丽的花朵<br>让我们一起编织属于我们的爱心花环</p>
+                <input type="text" id="nameInput" class="name-input" placeholder="输入那个特别的人的名字..." maxlength="8">
+                <br>
+                <button class="game-btn" onclick="startGame()">开始编织花环 ✨</button>
+            </div>
+        </div>
+
+        <!-- 游戏主界面 -->
+        <div class="game-screen hidden" id="gameScreen">
+            <div class="progress-container">
+                <div class="progress-bar" id="progressBar" style="width: 0%"></div>
+            </div>
+            
+            <div class="question" id="questionText"></div>
+            <div id="gameContent"></div>
+            
+            <button class="game-btn hidden" id="nextBtn" onclick="nextQuestion()">继续编织 →</button>
+        </div>
+
+        <!-- 结果界面 -->
+        <div class="game-screen hidden" id="resultScreen">
+            <div class="result-screen">
+                <h2 class="game-title">🌺 花环完成！</h2>
+                <div class="complete-wreath" id="completeWreath"></div>
+                <div class="love-percentage">100%</div>
+                <div class="final-message" id="finalMessage"></div>
+                <button class="game-btn share-btn" onclick="showSharePanel()">分享这份美好 💌</button>
+                <button class="game-btn" onclick="restart()">重新编织 🔄</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 遮罩层 -->
+    <div class="overlay" id="overlay" onclick="hideSharePanel()"></div>
+
+    <!-- 分享面板 -->
+    <div class="share-panel" id="sharePanel">
+        <button class="share-panel-close" onclick="hideSharePanel()">×</button>
+        <h3 style="text-align: center; margin: 0; color: #8b5a83;">分享这份美好</h3>
+        <div class="share-options">
+            <div class="share-option" onclick="shareToWechat()">
+                <div class="share-option-icon">💬</div>
+                <div class="share-option-text">微信好友</div>
+            </div>
+            <div class="share-option" onclick="shareToMoments()">
+                <div class="share-option-icon">📱</div>
+                <div class="share-option-text">朋友圈</div>
+            </div>
+            <div class="share-option" onclick="copyLink()">
+                <div class="share-option-icon">🔗</div>
+                <div class="share-option-text">复制链接</div>
+            </div>
+            <div class="share-option" onclick="shareToQQ()">
+                <div class="share-option-icon">🐧</div>
+                <div class="share-option-text">QQ好友</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 微信分享配置
+        const shareConfig = {
+            title: '🌸 爱心花环游戏 🌸',
+            desc: '我们一起编织了美丽的爱心花环，每一朵花都充满了爱意💖',
+            link: window.location.href,
+            imgUrl: 'https://你的域名.com/share-image.jpg', // 需要替换为你的分享图片
+            success: function () {
+                console.log('分享成功');
+            },
+            cancel: function () {
+                console.log('取消分享');
+            }
+        };
+
+        // 初始化微信分享
+        function initWechatShare() {
+            // 这里需要从后端获取微信JS-SDK的配置参数
+            // 包括 appId, timestamp, nonceStr, signature
+            
+            // 示例配置（需要替换为真实的配置）
+            wx.config({
+                debug: false, // 开启调试模式
+                appId: '你的微信公众号AppId', // 必填，公众号的唯一标识
+                timestamp: '', // 必填，生成签名的时间戳
+                nonceStr: '', // 必填，生成签名的随机串
+                signature: '', // 必填，签名
+                jsApiList: [
+                    'updateAppMessageShareData',
+                    'updateTimelineShareData',
+                    'onMenuShareAppMessage',
+                    'onMenuShareTimeline'
+                ] // 必填，需要使用的JS接口列表
+            });
+
+            wx.ready(function() {
+                // 微信分享到朋友圈
+                wx.updateTimelineShareData({
+                    title: shareConfig.title,
+                    link: shareConfig.link,
+                    imgUrl: shareConfig.imgUrl,
+                    success: shareConfig.success
+                });
+
+                // 微信分享给朋友
+                wx.updateAppMessageShareData({
+                    title: shareConfig.title,
+                    desc: shareConfig.desc,
+                    link: shareConfig.link,
+                    imgUrl: shareConfig.imgUrl,
+                    success: shareConfig.success
+                });
+
+                // 兼容旧版本
+                wx.onMenuShareTimeline({
+                    title: shareConfig.title,
+                    link: shareConfig.link,
+                    imgUrl: shareConfig.imgUrl,
+                    success: shareConfig.success
+                });
+
+                wx.onMenuShareAppMessage({
+                    title: shareConfig.title,
+                    desc: shareConfig.desc,
+                    link: shareConfig.link,
+                    imgUrl: shareConfig.imgUrl,
+                    success: shareConfig.success
+                });
+            });
+
+            wx.error(function(res) {
+                console.log('微信JS-SDK配置失败:', res);
+            });
+        }
+
+        // 检测是否在微信中
+        function isWechat() {
+            return /micromessenger/i.test(navigator.userAgent);
+        }
+        // 全局变量
+        let targetName = '';
+        let currentQuestion = 0;
+        let totalQuestions = 5;
+        let collectedFlowers = [];
+        let isMusicPlaying = false;
+        let bgMusic, clickSound, successSound;
+        let audioContext;
+        let isAudioInitialized = false;
+        
+        let questions = [
+            {
+                type: 'choice',
+                question: '在一个温暖的午后，你最想和TA一起做什么？',
+                choices: ['看一本有趣的书', '听着音乐聊天', '一起做手工', '安静地发呆'],
+                responses: ['在书香中找到彼此的灵魂', '音乐里藏着我们的小秘密', '用心创造属于我们的回忆', '最美的时光就是和你一起虚度'],
+                flowers: ['💖', '💕']
+            },
+            {
+                type: 'garden',
+                question: '点亮我们的爱心花园，让每朵花都绽放 💖',
+                flowers: ['🌸', '🌺', '🌹']
+            },
+            {
+                type: 'choice',
+                question: '如果要给TA一个小惊喜，你会选择？',
+                choices: ['写一张温馨的便条', '画一幅简单的画', '做TA喜欢的点心', '收集一些美丽的叶子'],
+                responses: ['文字是心意最温柔的载体', '每一笔都画着对你的喜欢', '爱意藏在每一口甜蜜里', '就像收集美好，我想收集你的笑容'],
+                flowers: ['💜', '💙']
+            },
+            {
+                type: 'stars',
+                question: '收集天空中闪亮的小星星 ⭐',
+                flowers: ['✨', '💫', '⭐']
+            },
+            {
+                type: 'memory',
+                question: '找到所有相同的美好回忆 💭',
+                flowers: ['🌺', '🌈', '☀️']
+            }
+        ];
+
+        // 初始化
+        function init() {
+            createSakura();
+            setInterval(addSakura, 2500);
+            initAudio();
+            setupViewportHeight();
+            setupTouchEvents();
+        }
+
+        function setupViewportHeight() {
+            // 修复移动端 100vh 问题
+            let vh = window.innerHeight * 0.01;
+            document.documentElement.style.setProperty('--vh', `${vh}px`);
+            
+            window.addEventListener('resize', () => {
+                let vh = window.innerHeight * 0.01;
+                document.documentElement.style.setProperty('--vh', `${vh}px`);
+            });
+        }
+
+        function setupTouchEvents() {
+            // 防止双击缩放
+            let lastTouchEnd = 0;
+            document.addEventListener('touchend', function (event) {
+                const now = (new Date()).getTime();
+                if (now - lastTouchEnd <= 300) {
+                    event.preventDefault();
+                }
+                lastTouchEnd = now;
+            }, false);
+
+            // 防止长按选中文本
+            document.addEventListener('selectstart', function(e) {
+                e.preventDefault();
+            });
+
+            // 防止下拉刷新
+            document.addEventListener('touchmove', function(e) {
+                if (e.touches.length > 1) {
+                    e.preventDefault();
+                }
+            }, { passive: false });
+        }
+
+        function initAudio() {
+            bgMusic = document.getElementById('bgMusic');
+            clickSound = document.getElementById('clickSound');
+            successSound = document.getElementById('successSound');
+            
+            // 设置音量
+            if (bgMusic) bgMusic.volume = 0.3;
+            if (clickSound) clickSound.volume = 0.5;
+            if (successSound) successSound.volume = 0.6;
+            
+            // 移动端音频需要用户交互后才能播放
+            document.addEventListener('touchstart', initAudioContext, { once: true });
+            document.addEventListener('click', initAudioContext, { once: true });
+        }
+
+        function initAudioContext() {
+            if (!isAudioInitialized) {
+                // 预加载音频
+                if (bgMusic) {
+                    bgMusic.load();
+                }
+                if (clickSound) {
+                    clickSound.load();
+                }
+                if (successSound) {
+                    successSound.load();
+                }
+                
+                isAudioInitialized = true;
+            }
+        }
+
+        function toggleMusic() {
+            const musicControl = document.getElementById('musicControl');
+            
+            if (!isAudioInitialized) {
+                initAudioContext();
+            }
+            
+            if (isMusicPlaying) {
+                // 停止音乐
+                isMusicPlaying = false;
+                musicControl.textContent = '🎵';
+                musicControl.classList.remove('playing');
+                
+                if (bgMusic) {
+                    bgMusic.pause();
+                }
+            } else {
+                // 播放音乐
+                isMusicPlaying = true;
+                musicControl.textContent = '🎶';
+                musicControl.classList.add('playing');
+                
+                if (bgMusic) {
+                    bgMusic.play().catch(e => {
+                        console.log('音频播放失败:', e);
+                        // 如果播放失败，重置状态
+                        isMusicPlaying = false;
+                        musicControl.textContent = '🎵';
+                        musicControl.classList.remove('playing');
+                    });
+                }
+            }
+        }
+
+        function playClickSound() {
+            if (!isAudioInitialized) return;
+            
+            try {
+                if (clickSound) {
+                    clickSound.currentTime = 0;
+                    clickSound.play().catch(() => {}); // 忽略播放错误
+                }
+            } catch (e) {
+                // 静默处理音频错误
+            }
+        }
+
+        function playSuccessSound() {
+            if (!isAudioInitialized) return;
+            
+            try {
+                if (successSound) {
+                    successSound.currentTime = 0;
+                    successSound.play().catch(() => {}); // 忽略播放错误
+                }
+            } catch (e) {
+                // 静默处理音频错误
+            }
+        }
+
+        function createSakura() {
+            const container = document.getElementById('sakuraContainer');
+            const sakuraSymbols = ['🌸', '🌺', '🌹'];
+            
+            for (let i = 0; i < 5; i++) {
+                setTimeout(() => {
+                    const sakura = document.createElement('div');
+                    sakura.className = 'sakura';
+                    sakura.innerHTML = sakuraSymbols[Math.floor(Math.random() * sakuraSymbols.length)];
+                    sakura.style.left = Math.random() * 100 + '%';
+                    sakura.style.animationDuration = (Math.random() * 5 + 8) + 's';
+                    container.appendChild(sakura);
+                    
+                    setTimeout(() => sakura.remove(), 13000);
+                }, i * 400);
+            }
+        }
+
+        function addSakura() {
+            const container = document.getElementById('sakuraContainer');
+            const sakura = document.createElement('div');
+            sakura.className = 'sakura';
+            sakura.innerHTML = ['🌸', '🌺'][Math.floor(Math.random() * 2)];
+            sakura.style.left = Math.random() * 100 + '%';
+            sakura.style.animationDuration = (Math.random() * 3 + 6) + 's';
+            container.appendChild(sakura);
+            
+            setTimeout(() => sakura.remove(), 9000);
+        }
+
+        function startGame() {
+            const nameInput = document.getElementById('nameInput');
+            targetName = nameInput.value.trim();
+            
+            if (!targetName) {
+                alert('请输入那个特别的人的名字哦 🌸');
+                return;
+            }
+
+            playClickSound();
+            
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('gameScreen').classList.remove('hidden');
+
+            currentQuestion = 0;
+            collectedFlowers = [];
+            showQuestion();
+        }
+
+        function showQuestion() {
+            if (currentQuestion >= totalQuestions) {
+                endGame();
+                return;
+            }
+
+            const question = questions[currentQuestion];
+            document.getElementById('questionText').textContent = question.question;
+            document.getElementById('nextBtn').classList.add('hidden');
+            
+            updateProgress();
+
+            if (question.type === 'choice') {
+                showChoiceQuestion(question);
+            } else if (question.type === 'garden') {
+                showGardenGame(question);
+            } else if (question.type === 'stars') {
+                showStarsGame(question);
+            } else if (question.type === 'memory') {
+                showMemoryGame(question);
+            }
+        }
+
+        function showChoiceQuestion(question) {
+            const content = document.getElementById('gameContent');
+            content.innerHTML = '';
+            
+            question.choices.forEach((choice, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'choice-btn';
+                btn.textContent = choice;
+                btn.onclick = () => selectChoice(index, question.responses[index], question.flowers);
+                content.appendChild(btn);
+            });
+        }
+
+        function selectChoice(selected, responseText, flowers) {
+            const buttons = document.querySelectorAll('.choice-btn');
+            buttons[selected].classList.add('correct');
+            
+            playSuccessSound();
+            createFloatingText(responseText, 'success');
+            
+            buttons.forEach(btn => btn.disabled = true);
+            
+            setTimeout(() => {
+                document.getElementById('nextBtn').classList.remove('hidden');
+            }, 2500);
+        }
+
+        function showGardenGame(question) {
+            const content = document.getElementById('gameContent');
+            content.innerHTML = '<div class="heart-garden"><div class="heart-grid" id="heartGrid"></div></div>';
+            
+            const grid = document.getElementById('heartGrid');
+            let bloomed = 0;
+            const target = 16; // 需要点击所有可见的花盆
+            
+            // 创建25个花盆，但只有16个可见（爱心形状）
+            for (let i = 0; i < 25; i++) {
+                const pot = document.createElement('div');
+                pot.className = 'heart-pot';
+                pot.innerHTML = '🌱';
+                
+                // 跳过不可见的花盆
+                if (pot.style.visibility === 'hidden') {
+                    grid.appendChild(pot);
+                    continue;
+                }
+                
+                pot.onclick = () => {
+                    if (!pot.classList.contains('bloomed')) {
+                        pot.classList.add('bloomed');
+                        pot.innerHTML = ['🌸', '🌺', '🌹'][Math.floor(Math.random() * 3)];
+                        bloomed++;
+                        
+                        playClickSound();
+                        
+                        if (bloomed === target) {
+                            playSuccessSound();
+                            createFloatingText('每一朵花都承载着美好', 'success');
+                            setTimeout(() => {
+                                document.getElementById('nextBtn').classList.remove('hidden');
+                            }, 2000);
+                        }
+                    }
+                };
+                
+                grid.appendChild(pot);
+            }
+        }
+
+        function showStarsGame(question) {
+            const content = document.getElementById('gameContent');
+            content.innerHTML = '<div class="star-field" id="starField"></div><div style="margin-top: 10px; color: #8b5a83; font-size: 0.9rem;">点击收集9颗星星</div>';
+            
+            let collected = 0;
+            const target = 9;
+            const starField = document.getElementById('starField');
+            
+            const spawnStar = () => {
+                const star = document.createElement('div');
+                star.className = 'falling-star';
+                star.innerHTML = ['⭐', '✨', '💫'][Math.floor(Math.random() * 3)];
+                star.style.left = Math.random() * (starField.offsetWidth - 40) + 'px';
+                
+                star.onclick = () => {
+                    collected++;
+                    star.remove();
+                    playClickSound();
+                    createFloatingText(`${collected}/${target}`, 'gentle');
+                    
+                    if (collected >= target) {
+                        clearInterval(gameInterval);
+                        playSuccessSound();
+                        createFloatingText('每一颗星星都是我们的约定', 'success');
+                        setTimeout(() => {
+                            document.getElementById('nextBtn').classList.remove('hidden');
+                        }, 2000);
+                    }
+                };
+                
+                starField.appendChild(star);
+                
+                setTimeout(() => {
+                    if (star.parentNode) star.remove();
+                }, 6000);
+            };
+
+            const gameInterval = setInterval(spawnStar, 1000);
+            
+            setTimeout(() => {
+                if (collected < target) {
+                    clearInterval(gameInterval);
+                    createFloatingText('时间到！再试一次', 'gentle');
+                    setTimeout(() => showStarsGame(question), 2000);
+                }
+            }, 20000);
+        }
+
+        function showMemoryGame(question) {
+            const content = document.getElementById('gameContent');
+            const symbols = ['🌸', '🌺', '🌹', '☀️', '🌈', '🦄', '🌸', '🌺', '🌹', '☀️', '🌈', '🦄'];
+            let flipped = [];
+            let matched = 0;
+            
+            content.innerHTML = '<div class="memory-grid" id="memoryGrid"></div><div style="margin-top: 10px; color: #8b5a83; font-size: 0.9rem;">找到所有6对相同图案</div>';
+            const grid = document.getElementById('memoryGrid');
+            
+            const shuffled = symbols.sort(() => Math.random() - 0.5);
+            
+            shuffled.forEach((symbol, index) => {
+                const card = document.createElement('div');
+                card.className = 'memory-card';
+                card.innerHTML = '💭';
+                card.dataset.symbol = symbol;
+                card.dataset.index = index;
+                
+                card.onclick = () => {
+                    if (flipped.length < 2 && !card.classList.contains('matched') && !card.classList.contains('flipped')) {
+                        card.classList.add('flipped');
+                        card.innerHTML = symbol;
+                        flipped.push(card);
+                        
+                        playClickSound();
+                        
+                        if (flipped.length === 2) {
+                            setTimeout(() => {
+                                if (flipped[0].dataset.symbol === flipped[1].dataset.symbol) {
+                                    flipped.forEach(c => c.classList.add('matched'));
+                                    matched += 2;
+                                    
+                                    playSuccessSound();
+                                    
+                                    if (matched === 12) {
+                                        createFloatingText('所有美好的回忆都值得珍藏', 'success');
+                                        setTimeout(() => {
+                                            document.getElementById('nextBtn').classList.remove('hidden');
+                                        }, 2000);
+                                    }
+                                } else {
+                                    flipped.forEach(c => {
+                                        c.classList.remove('flipped');
+                                        c.innerHTML = '💭';
+                                    });
+                                }
+                                flipped = [];
+                            }, 800);
+                        }
+                    }
+                };
+                
+                grid.appendChild(card);
+            });
+        }
+
+        function createFloatingText(text, type) {
+            const float = document.createElement('div');
+            float.textContent = text;
+            float.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                color: ${type === 'success' ? '#86efac' : '#e879f9'};
+                font-size: 1.2rem;
+                font-weight: 300;
+                pointer-events: none;
+                z-index: 1000;
+                animation: gentleFloat 3s ease-out forwards;
+                max-width: 300px;
+                text-align: center;
+                line-height: 1.5;
+                padding: 10px;
+                background: rgba(255, 255, 255, 0.9);
+                border-radius: 15px;
+                backdrop-filter: blur(10px);
+                border: 1px solid rgba(232, 121, 249, 0.3);
+            `;
+            
+            document.body.appendChild(float);
+            setTimeout(() => float.remove(), 3000);
+        }
+
+        function createSparkle(x, y) {
+            const sparkle = document.createElement('div');
+            sparkle.className = 'sparkle';
+            sparkle.innerHTML = '✨';
+            sparkle.style.left = x + 'px';
+            sparkle.style.top = y + 'px';
+            document.getElementById('sparkles').appendChild(sparkle);
+            
+            setTimeout(() => sparkle.remove(), 3000);
+        }
+
+        function nextQuestion() {
+            playClickSound();
+            currentQuestion++;
+            showQuestion();
+        }
+
+        function updateProgress() {
+            const progress = (currentQuestion / totalQuestions) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+        }
+
+        function endGame() {
+            document.getElementById('gameScreen').classList.add('hidden');
+            document.getElementById('resultScreen').classList.remove('hidden');
+
+            // 显示完整的唯美爱心形状花环
+            const completeWreath = document.getElementById('completeWreath');
+            completeWreath.innerHTML = `
+                <div class="complete-heart-wreath">
+                    <span></span><span></span><span></span><span>💖</span><span>🌸</span><span>💖</span><span></span><span></span><span></span>
+                    <span></span><span>💕</span><span>🌺</span><span>✨</span><span>💜</span><span>✨</span><span>🌺</span><span>💕</span><span></span>
+                    <span>🌹</span><span>💙</span><span>🌸</span><span>💫</span><span>💖</span><span>💫</span><span>🌸</span><span>💙</span><span>🌹</span>
+                    <span>💜</span><span>✨</span><span>🌺</span><span>🌈</span><span>💕</span><span>🌈</span><span>🌺</span><span>✨</span><span>💜</span>
+                    <span></span><span>🌸</span><span>💖</span><span>☀️</span><span>💜</span><span>☀️</span><span>💖</span><span>🌸</span><span></span>
+                    <span></span><span></span><span>💕</span><span>🌺</span><span>💖</span><span>🌺</span><span>💕</span><span></span><span></span>
+                    <span></span><span></span><span></span><span>🌸</span><span>💕</span><span>🌸</span><span></span><span></span><span></span>
+                    <span></span><span></span><span></span><span></span><span>💖</span><span></span><span></span><span></span><span></span>
+                </div>
+            `;
+            
+            const message = `${targetName}，我们一起编织了这个美丽的爱心花环<br><br>每一朵花都代表着我对你的心意<br><br>就像这个花环一样，我的爱是完整的、永恒的<br><br>所以... 愿意接受这个花环，做我的女朋友吗？🌸`;
+            
+            document.getElementById('finalMessage').innerHTML = message;
+            
+            createCelebration();
+        }
+
+        function createCelebration() {
+            // 创建庆祝特效
+            for (let i = 0; i < 12; i++) {
+                setTimeout(() => {
+                    createSparkle(
+                        Math.random() * window.innerWidth,
+                        Math.random() * window.innerHeight
+                    );
+                }, i * 200);
+            }
+            
+            // 额外的花瓣雨
+            for (let i = 0; i < 20; i++) {
+                setTimeout(() => {
+                    const petal = document.createElement('div');
+                    petal.className = 'sakura';
+                    petal.innerHTML = ['🌸', '🌺', '💖', '💕'][Math.floor(Math.random() * 4)];
+                    petal.style.left = Math.random() * 100 + '%';
+                    petal.style.animationDuration = '4s';
+                    petal.style.fontSize = '20px';
+                    document.getElementById('sakuraContainer').appendChild(petal);
+                    
+                    setTimeout(() => petal.remove(), 4000);
+                }, i * 100);
+            }
+        }
+
+        function shareResult() {
+            showSharePanel();
+        }
+
+        function showSharePanel() {
+            document.getElementById('overlay').classList.add('show');
+            document.getElementById('sharePanel').classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function hideSharePanel() {
+            document.getElementById('overlay').classList.remove('show');
+            document.getElementById('sharePanel').classList.remove('show');
+            document.body.style.overflow = '';
+        }
+
+        function shareToWechat() {
+            if (isWechat()) {
+                // 在微信中，提示用户点击右上角分享
+                alert('请点击右上角"..."按钮，选择"发送给朋友"进行分享！');
+            } else {
+                // 不在微信中，提供其他分享方式
+                copyLink();
+            }
+            hideSharePanel();
+        }
+
+        function shareToMoments() {
+            if (isWechat()) {
+                // 在微信中，提示用户点击右上角分享
+                alert('请点击右上角"..."按钮，选择"分享到朋友圈"进行分享！');
+            } else {
+                // 不在微信中，提供其他分享方式
+                copyLink();
+            }
+            hideSharePanel();
+        }
+
+        function copyLink() {
+            const shareText = `🌸 ${shareConfig.title}\n${shareConfig.desc}\n${shareConfig.link}`;
+            
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(shareText).then(() => {
+                    showToast('链接已复制到剪贴板！');
+                }).catch(() => {
+                    fallbackCopyTextToClipboard(shareText);
+                });
+            } else {
+                fallbackCopyTextToClipboard(shareText);
+            }
+            hideSharePanel();
+        }
+
+        function fallbackCopyTextToClipboard(text) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            textArea.style.top = "0";
+            textArea.style.left = "0";
+            textArea.style.position = "fixed";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            
+            try {
+                document.execCommand('copy');
+                showToast('链接已复制到剪贴板！');
+            } catch (err) {
+                showToast('复制失败，请手动复制：' + text);
+            }
+            
+            document.body.removeChild(textArea);
+        }
+
+        function shareToQQ() {
+            const shareUrl = `https://connect.qq.com/widget/shareqq/index.html?url=${encodeURIComponent(shareConfig.link)}&title=${encodeURIComponent(shareConfig.title)}&desc=${encodeURIComponent(shareConfig.desc)}`;
+            window.open(shareUrl, '_blank');
+            hideSharePanel();
+        }
+
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.textContent = message;
+            toast.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: rgba(0, 0, 0, 0.8);
+                color: white;
+                padding: 10px 20px;
+                border-radius: 20px;
+                font-size: 0.9rem;
+                z-index: 3000;
+                max-width: 80%;
+                text-align: center;
+                line-height: 1.4;
+            `;
+            
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                document.body.removeChild(toast);
+            }, 2000);
+        }
+
+        function restart() {
+            playClickSound();
+            document.getElementById('resultScreen').classList.add('hidden');
+            document.getElementById('startScreen').classList.remove('hidden');
+            document.getElementById('nameInput').value = '';
+            targetName = '';
+            currentQuestion = 0;
+            collectedFlowers = [];
+        }
+
+        // 页面加载后初始化
+        window.addEventListener('load', function() {
+            init();
+            
+            // 如果在微信中，初始化微信分享
+            if (isWechat()) {
+                // 注意：这里需要从后端获取微信JS-SDK配置
+                // initWechatShare();
+            }
+        });
+        
+        // 页面可见性变化处理（切换标签页时暂停音乐）
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden && isMusicPlaying && bgMusic) {
+                bgMusic.pause();
+            } else if (!document.hidden && isMusicPlaying && bgMusic) {
+                bgMusic.play().catch(() => {});
+            }
+        });
+    </script>
+</body>
+</html>
